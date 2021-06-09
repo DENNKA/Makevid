@@ -1,3 +1,31 @@
+# compilation
+.*_time
+build/
+bin/
+Makevid
+
+# glsl images
+glsl/glsl-img
+
+# subtitles
+*.srt
+*.ass
+
+# audio or video
+*.mp3
+*.mp4
+*.webm
+*.ogg
+*.m4a
+*.flac
+
+# generated phrases
+*.ph
+
+
+
+# C++
+
 # Prerequisites
 *.d
 
