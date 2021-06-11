@@ -67,6 +67,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
     int width = window.getSize().x;
     int height = window.getSize().y;
     sf::RectangleShape rect(sf::Vector2f(width, height));
+    sf::RectangleShape rectangleBackground(sf::Vector2f(width, height));
     rect.setFillColor(sf::Color::Black);
 
     sf::RenderTexture rectangle;
@@ -186,6 +187,8 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
             }
         }
 
+        bool textUpdated = false;
+
         if (service) {
 
             sf::RectangleShape rect(sf::Vector2f(width, height));
@@ -224,8 +227,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         auto time = clock.getElapsedTime().asMilliseconds();
 
         if (currentPhrase < (int)phrases.size()) {
-
-            std::clog << "start " << phrases[currentPhrase].getStart() << " end " << phrases[currentPhrase].getEnd() << " time " << time << "active" << (activePhrase ? "TRUE" : "FALSE") << std::endl;
+            //std::clog << "start " << phrases[currentPhrase].getStart() << " end " << phrases[currentPhrase].getEnd() << " time " << time << "active" << (activePhrase ? "TRUE" : "FALSE") << std::endl;
 
             if (phrases[currentPhrase].getStart() <= time && phrases[currentPhrase].getEnd() > time) {
                 if (!activePhrase) {
@@ -247,6 +249,10 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
 
                     std::clog << "Phrase: " << currentPhrase << " / " << phrases.size() << std::endl;
                     std::clog << "charSize: " << charSize << std::endl;
+
+                    rectangleBackground.setFillColor(sf::Color::Transparent);
+
+                    textUpdated = true;
                 }
 
                 activePhrase = true;
@@ -270,6 +276,16 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
 
                     #define f(x) std::stof(x)
                     #define i(x) std::stoi(x)
+
+                    if (textUpdated) {
+                        switch (phraseMode.mode) {
+                            case Mode::BackgroundColor:
+                                rectangleBackground.setFillColor(sf::Color(i(params[0]), i(params[1]), i(params[2]), i(params[3])));
+                                break;
+                            default:
+                                break;
+                        }
+                    }
 
                     switch (phraseMode.mode) {
                         case Mode::Shader:
@@ -392,6 +408,8 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         const sf::Texture& texture = renderFunction.getTexture();
         sf::Sprite sprite(texture);
         window.draw(sprite);
+
+        window.draw(rectangleBackground);
 
         window.draw(text);
 

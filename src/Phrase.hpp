@@ -9,7 +9,8 @@
 enum class Mode {
     Shader,
     InZoom,
-    OutZoom
+    OutZoom,
+    BackgroundColor
 };
 
 struct Operations {
