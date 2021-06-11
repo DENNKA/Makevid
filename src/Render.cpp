@@ -8,10 +8,10 @@ namespace fs = std::filesystem;
 }*/
 
 Render::Render() {
-    //for(auto& p : fs::directory_iterator("glsl/animated"))
-        //shadersPaths.push_back(p.path());
+    for(auto& p : fs::directory_iterator("1/glsl/animated"))
+        shadersPaths.push_back(p.path());
 
-    std::string line;
+    /*std::string line;
     std::ifstream in("shaders_static.txt");
     if (in.is_open())
     {
@@ -20,7 +20,7 @@ Render::Render() {
             shadersPaths.push_back(line);
         }
     }
-    in.close();
+    in.close();*/
 
     std::sort(shadersPaths.begin(), shadersPaths.end());
 }
@@ -157,7 +157,9 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                             if (service) {
                                 std::ofstream out;
                                 out.open("shaders_good.txt", std::ios_base::app);
-                                out << shadersPaths[currentShader] << std::endl;
+                                std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
+                                std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
+                                out << filename << std::endl;
                                 currentShader++;
                             }
                             break;
@@ -165,7 +167,9 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                             if (service) {
                                 std::ofstream out;
                                 out.open("shaders_static.txt", std::ios_base::app);
-                                out << shadersPaths[currentShader] << std::endl;
+                                std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
+                                std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
+                                out << filename << std::endl;
                                 currentShader++;
                             }
                             break;
@@ -173,7 +177,9 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                             if (service) {
                                 std::ofstream out;
                                 out.open("shaders_normal.txt", std::ios_base::app);
-                                out << shadersPaths[currentShader] << std::endl;
+                                std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
+                                std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
+                                out << filename << std::endl;
                                 currentShader++;
                             }
                             break;
