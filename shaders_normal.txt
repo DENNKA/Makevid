@@ -42,3 +42,10 @@ glsl/glsl/va10886.fragment.glsl
 glsl/glsl/va10926.fragment.glsl
 glsl/glsl/va10967.fragment.glsl
 glsl/glsl/va10968.fragment.glsl
+glsl/glsl/va1099.fragment.glsl
+glsl/glsl/va11016.fragment.glsl
+glsl/glsl/va11099.fragment.glsl
+glsl/glsl/va11128.fragment.glsl
+glsl/glsl/va11140.fragment.glsl
+glsl/glsl/va11166.fragment.glsl
+glsl/glsl/va11178.fragment.glsl

@@ -99,7 +99,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
     text.setFillColor(sf::Color::White);
 
     int currentPhrase = 0;
-    int currentShader = 850; // service
+    int currentShader = 1202; // service
     int lastShader = currentShader;
     bool activePhrase = false;
     bool switchShader = true;

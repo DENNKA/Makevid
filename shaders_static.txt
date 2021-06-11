@@ -34,3 +34,5 @@ glsl/glsl/va10908.fragment.glsl
 glsl/glsl/va1091.fragment.glsl
 glsl/glsl/va10952.fragment.glsl
 glsl/glsl/va10966.fragment.glsl
+glsl/glsl/va11054.fragment.glsl
+glsl/glsl/va11271.fragment.glsl
