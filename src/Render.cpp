@@ -104,8 +104,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
     bool activePhrase = false;
     bool switchShader = true;
     int charSize = 70;
-    text.setOutlineColor(sf::Color::Black);
-    text.setOutlineThickness(4.0f);
+    float thickness = 4.0f;
 
     bool running = false;
     bool service = false;
@@ -236,6 +235,8 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
             //std::clog << "start " << phrases[currentPhrase].getStart() << " end " << phrases[currentPhrase].getEnd() << " time " << time << "active" << (activePhrase ? "TRUE" : "FALSE") << std::endl;
 
             if (phrases[currentPhrase].getStart() <= time && phrases[currentPhrase].getEnd() > time) {
+
+                // NEXT PHRASE
                 if (!activePhrase) {
                     text.setString(cv.from_bytes(phrases[currentPhrase].getText()));
 
@@ -257,6 +258,9 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                     std::clog << "charSize: " << charSize << std::endl;
 
                     rectangleBackground.setFillColor(sf::Color::Transparent);
+
+                    text.setOutlineColor(sf::Color::Black);
+                    text.setOutlineThickness(4.0f);
 
                     textUpdated = true;
                 }
@@ -283,6 +287,11 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                     #define f(x) std::stof(x)
                     #define i(x) std::stoi(x)
 
+                    // skip if time not match (from start)
+                    #define checkTime(x) if (timeFromStartPhrase > x) {break;}
+                    // reverse (from end)
+                    #define checkTimeReverse(x) if (timeFromStartPhrase < x) {break;}
+
                     if (textUpdated) {
                         switch (phraseMode.mode) {
                             case Mode::BackgroundColor:
@@ -306,6 +315,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                             }
                             break;
                         case Mode::InZoom: {
+                            checkTime(f(params[1]));
                             ForF forF = {f(params[0]), charSize, f(params[1]), timeFromStartPhrase};
                             text.setCharacterSize(std::min(linear(forF), (float)charSize));
                             //ForF forF = {charSize, f(params[0]), f(params[1]), timeFromStartPhrase, f(params[1]) - timePhrase};
@@ -330,8 +340,11 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                             break;
                         }
                         case Mode::OutZoom: {
+                            checkTimeReverse(f(params[1]));
                             ForF forF = {charSize, f(params[0]), f(params[1]), timeFromStartPhrase, f(params[1]) - timePhrase};
-                            text.setCharacterSize(std::min(linear(forF), (float)charSize));
+                            auto min = std::max(std::min(linear(forF), (float)charSize), 0.0f);
+                            text.setCharacterSize(min);
+                            text.setOutlineThickness(min / charSize * thickness);
                             needCenter = true;
                             break;
                         }
@@ -417,7 +430,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
 
         window.draw(rectangleBackground);
 
-        window.draw(text);
+        text.getCharacterSize() > 0 ? window.draw(text) : void();
 
         window.display();
 
