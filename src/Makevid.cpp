@@ -166,7 +166,7 @@ std::vector<Phrase> Makevid::processing(std::vector<Phrase> phrases) {
         phrase.addMode(Mode::Shader, {shadersPaths[rand() % shadersPaths.size()]});
 
         if (std::all_of(text.begin(), text.end(), [](unsigned char c){ return !std::isalpha(c) || std::isupper(c); })) {
-            phrase.addMode(Mode::InZoom, {"10", "100"});
+            phrase.addMode(Mode::Zoom, {"1", "10", "100"});
         }
 
     }

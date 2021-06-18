@@ -302,6 +302,9 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                         }
                     }
 
+                    ForF forF;
+                    float y;
+
                     switch (phraseMode.mode) {
                         case Mode::Shader:
                             if (switchShader) {
@@ -314,37 +317,18 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                                 shader.setUniform("mouse", sf::Vector2f(0.5f, 0.5f));
                             }
                             break;
-                        case Mode::InZoom: {
-                            checkTime(f(params[1]));
-                            ForF forF = {f(params[0]), charSize, f(params[1]), timeFromStartPhrase};
-                            text.setCharacterSize(std::min(linear(forF), (float)charSize));
-                            //ForF forF = {charSize, f(params[0]), f(params[1]), timeFromStartPhrase, f(params[1]) - timePhrase};
-                            //text.setCharacterSize(std::max(linear(forF), (float)charSize));
-                            /*renderFunction.clear();
-
-                            sf::RectangleShape rectangle(sf::Vector2f(120.f, 50.f));
-                            rectangle.setSize(sf::Vector2f(1, 1));
-                            for (int i = 0; i < 1000; i++) {
-                                ForF forF = {charSize, f(params[0]), f(params[1]), i, -500};
-                                auto y = std::min(linear(forF), (float)charSize);
-                                rectangle.setPosition(i, height/2 - y);
-                                rectangle.setFillColor(sf::Color::Blue);
-                                renderFunction.draw(rectangle);
-                                y = linear(forF);
-                                rectangle.setFillColor(sf::Color::Red);
-                                rectangle.setPosition(i, height/2 - y);
-                                renderFunction.draw(rectangle);
+                        case Mode::Zoom: {
+                            if (i(params[0]) == 0) {
+                                forF = {f(params[1]), charSize, f(params[2]), timeFromStartPhrase};
+                                y = std::min(linear(forF), (float)charSize);
+                            } else {
+                                forF = {charSize, f(params[1]), f(params[2]), timeFromStartPhrase, f(params[2]) - timePhrase};
+                                y = std::max(std::min(linear(forF), (float)charSize), 0.0f);
                             }
-                            renderFunction.display();*/
-                            needCenter = true;
-                            break;
-                        }
-                        case Mode::OutZoom: {
-                            checkTimeReverse(f(params[1]));
-                            ForF forF = {charSize, f(params[0]), f(params[1]), timeFromStartPhrase, f(params[1]) - timePhrase};
-                            auto min = std::max(std::min(linear(forF), (float)charSize), 0.0f);
-                            text.setCharacterSize(min);
-                            text.setOutlineThickness(min / charSize * thickness);
+
+                            text.setCharacterSize(y);
+                            text.setOutlineThickness(y / charSize * thickness);
+
                             needCenter = true;
                             break;
                         }
@@ -365,6 +349,28 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         } else {
             text.setString(L"");
         }
+
+        #ifdef CHECK_FUNCTION
+            renderFunction.clear();
+            sf::RectangleShape rectangle(sf::Vector2f(120.f, 50.f));
+            rectangle.setSize(sf::Vector2f(1, 1));
+            for (int i = 0; i < 1000; i++) {
+
+                ForF forF = {0, 100, 1000, i};
+                auto y = linear(forF);
+
+                rectangle.setPosition(i, height / 2 - y);
+                rectangle.setFillColor(sf::Color::Blue);
+                renderFunction.draw(rectangle);
+
+                y = linear(forF);
+
+                rectangle.setFillColor(sf::Color::Red);
+                rectangle.setPosition(i, height / 2 - y);
+                renderFunction.draw(rectangle);
+            }
+            renderFunction.display();
+        #endif
 
         /*if (switchShader) {
             switchShader = false;*/
@@ -424,9 +430,11 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
 
         window.draw(background, &shader);
 
-        const sf::Texture& texture = renderFunction.getTexture();
-        sf::Sprite sprite(texture);
-        window.draw(sprite);
+        #ifdef CHECK_FUNCTION
+            const sf::Texture& texture = renderFunction.getTexture();
+            sf::Sprite sprite(texture);
+            window.draw(sprite);
+        #endif
 
         window.draw(rectangleBackground);
 
