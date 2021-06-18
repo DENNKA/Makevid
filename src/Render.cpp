@@ -319,9 +319,11 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                             break;
                         case Mode::Zoom: {
                             if (i(params[0]) == 0) {
+                                checkTime(f(params[2]));
                                 forF = {f(params[1]), charSize, f(params[2]), timeFromStartPhrase};
                                 y = std::min(linear(forF), (float)charSize);
                             } else {
+                                checkTimeReverse(f(params[2]));
                                 forF = {charSize, f(params[1]), f(params[2]), timeFromStartPhrase, f(params[2]) - timePhrase};
                                 y = std::max(std::min(linear(forF), (float)charSize), 0.0f);
                             }
