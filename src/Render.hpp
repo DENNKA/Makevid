@@ -3,6 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <SFML/OpenGL.hpp>
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -11,8 +12,10 @@
 #include <cmath>
 #include <future>
 #include <locale>
+#include <errno.h>
 
 #include "Phrase.hpp"
+#include "Record.hpp"
 
 class Render {
     public:

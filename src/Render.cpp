@@ -1,4 +1,5 @@
 #include "Render.hpp"
+#include "format.cpp"
 
 namespace fs = std::filesystem;
 
@@ -8,7 +9,7 @@ namespace fs = std::filesystem;
 }*/
 
 Render::Render() {
-    for(auto& p : fs::directory_iterator("1/glsl/animated"))
+    for(auto& p : fs::directory_iterator("glsl/glsl"))
         shadersPaths.push_back(p.path());
 
     /*std::string line;
@@ -61,8 +62,14 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         std::cerr<<phrase.getStart()<<L" : "<<phrase.getEnd()<<L" "<<phrase.getText()<<std::endl;
     }*/
     //sf::RenderWindow window(sf::VideoMode::getFullscreenModes()[0], "Makevid");
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "Makevid");
-    window.setFramerateLimit(70);
+    #ifdef REALTIME
+        sf::RenderWindow window(sf::VideoMode(1600, 848), "Makevid");
+    #else
+        sf::RenderTexture window;
+        window.create(1600, 900);
+    #endif
+    const int fps = 64;
+    //window.setFramerateLimit(60);
 
     int width = window.getSize().x;
     int height = window.getSize().y;
@@ -106,7 +113,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
     int charSize = 70;
     float thickness = 4.0f;
 
-    bool running = false;
+    bool running = true;
     bool service = false;
     bool musicRunning = false;
 
@@ -123,74 +130,84 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         // error...
     }
 
-    //double time = 0.0d;
+    double time = 0.0; // ms
+
+    sf::RenderTexture renderTexture;
+    renderTexture.create(width, height);
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>> cv;
 
-    while (window.isOpen()) {
+    GLubyte* screenBuffer = new GLubyte[width * height * 4];
+    Record record;
+    record.run(fps, width, height);
 
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            switch (event.type) {
-                case sf::Event::Closed:
-                    window.close();
-                    return;
-                case sf::Event::KeyPressed:
-                    switch (event.key.code) {
-                        case sf::Keyboard::Space:
-                            running = !running;
-                            clock.restart();
-                            break;
-                        case sf::Keyboard::Escape:
-                            window.close();
-                            return;
-                        case sf::Keyboard::C:
-                            if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+    while (running) {
+
+        #ifdef REALTIME
+            sf::Event event;
+            while (window.pollEvent(event)) {
+                switch (event.type) {
+                    case sf::Event::Closed:
+                        window.close();
+                        running = false;
+                        return;
+                    case sf::Event::KeyPressed:
+                        switch (event.key.code) {
+                            case sf::Keyboard::Space:
+                                running = !running;
+                                clock.restart();
+                                break;
+                            case sf::Keyboard::Escape:
                                 window.close();
-                            }
-                            return;
-                        case sf::Keyboard::S:
-                            service = true;
-                            break;
-                        case sf::Keyboard::Right:
-                            if (service) {
-                                std::ofstream out;
-                                out.open("shaders_good.txt", std::ios_base::app);
-                                std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
-                                std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
-                                out << filename << std::endl;
+                                return;
+                            case sf::Keyboard::C:
+                                if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+                                    window.close();
+                                }
+                                return;
+                            case sf::Keyboard::S:
+                                service = true;
+                                break;
+                            case sf::Keyboard::Right:
+                                if (service) {
+                                    std::ofstream out;
+                                    out.open("shaders_good.txt", std::ios_base::app);
+                                    std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
+                                    std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
+                                    out << filename << std::endl;
+                                    currentShader++;
+                                }
+                                break;
+                            case sf::Keyboard::Up:
+                                if (service) {
+                                    std::ofstream out;
+                                    out.open("shaders_static.txt", std::ios_base::app);
+                                    std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
+                                    std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
+                                    out << filename << std::endl;
+                                    currentShader++;
+                                }
+                                break;
+                            case sf::Keyboard::Down:
+                                if (service) {
+                                    std::ofstream out;
+                                    out.open("shaders_normal.txt", std::ios_base::app);
+                                    std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
+                                    std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
+                                    out << filename << std::endl;
+                                    currentShader++;
+                                }
+                                break;
+                            case sf::Keyboard::Left:
                                 currentShader++;
-                            }
-                            break;
-                        case sf::Keyboard::Up:
-                            if (service) {
-                                std::ofstream out;
-                                out.open("shaders_static.txt", std::ios_base::app);
-                                std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
-                                std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
-                                out << filename << std::endl;
-                                currentShader++;
-                            }
-                            break;
-                        case sf::Keyboard::Down:
-                            if (service) {
-                                std::ofstream out;
-                                out.open("shaders_normal.txt", std::ios_base::app);
-                                std::size_t found = shadersPaths[currentShader].find_last_of("/\\");
-                                std::string filename = "glsl/glsl/" + shadersPaths[currentShader].substr(found + 1);
-                                out << filename << std::endl;
-                                currentShader++;
-                            }
-                            break;
-                        case sf::Keyboard::Left:
-                            currentShader++;
-                            break;
-                        default: break;
-                    }
-                default:
-                    break;
+                                break;
+                            default: break;
+                        }
+                    default:
+                        break;
+                }
             }
-        }
+        #endif
 
         bool textUpdated = false;
 
@@ -220,21 +237,19 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
             //lastShader = currentShader;
         }
 
-        if (!running) {
-            continue;
-        }
-
         if (!musicRunning) {
             musicRunning = true;
             music.play();
         }
 
-        auto time = clock.getElapsedTime().asMilliseconds();
+        #ifdef REALTIME
+            time = (double)clock.getElapsedTime().asMilliseconds();
+        #endif
 
         if (currentPhrase < (int)phrases.size()) {
             //std::clog << "start " << phrases[currentPhrase].getStart() << " end " << phrases[currentPhrase].getEnd() << " time " << time << "active" << (activePhrase ? "TRUE" : "FALSE") << std::endl;
 
-            if (phrases[currentPhrase].getStart() <= time && phrases[currentPhrase].getEnd() > time) {
+            if (phrases[currentPhrase].getStart() <= time && phrases[currentPhrase].getEnd() >= time) {
 
                 // NEXT PHRASE
                 if (!activePhrase) {
@@ -255,7 +270,7 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                     text.setPosition(width / 2.0f, height / 2.0f);
 
                     std::clog << "Phrase: " << currentPhrase << " / " << phrases.size() << std::endl;
-                    std::clog << "charSize: " << charSize << std::endl;
+                    //std::clog << "charSize: " << charSize << std::endl;
 
                     rectangleBackground.setFillColor(sf::Color::Transparent);
 
@@ -302,6 +317,9 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                         }
                     }
 
+                    ForF forF;
+                    float y;
+
                     switch (phraseMode.mode) {
                         case Mode::Shader:
                             if (switchShader) {
@@ -314,37 +332,20 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
                                 shader.setUniform("mouse", sf::Vector2f(0.5f, 0.5f));
                             }
                             break;
-                        case Mode::InZoom: {
-                            checkTime(f(params[1]));
-                            ForF forF = {f(params[0]), charSize, f(params[1]), timeFromStartPhrase};
-                            text.setCharacterSize(std::min(linear(forF), (float)charSize));
-                            //ForF forF = {charSize, f(params[0]), f(params[1]), timeFromStartPhrase, f(params[1]) - timePhrase};
-                            //text.setCharacterSize(std::max(linear(forF), (float)charSize));
-                            /*renderFunction.clear();
-
-                            sf::RectangleShape rectangle(sf::Vector2f(120.f, 50.f));
-                            rectangle.setSize(sf::Vector2f(1, 1));
-                            for (int i = 0; i < 1000; i++) {
-                                ForF forF = {charSize, f(params[0]), f(params[1]), i, -500};
-                                auto y = std::min(linear(forF), (float)charSize);
-                                rectangle.setPosition(i, height/2 - y);
-                                rectangle.setFillColor(sf::Color::Blue);
-                                renderFunction.draw(rectangle);
-                                y = linear(forF);
-                                rectangle.setFillColor(sf::Color::Red);
-                                rectangle.setPosition(i, height/2 - y);
-                                renderFunction.draw(rectangle);
+                        case Mode::Zoom: {
+                            if (i(params[0]) == 0) {
+                                checkTime(f(params[2]));
+                                forF = {f(params[1]), charSize, f(params[2]), timeFromStartPhrase};
+                                y = std::min(linear(forF), (float)charSize);
+                            } else {
+                                checkTimeReverse(f(params[2]));
+                                forF = {charSize, f(params[1]), f(params[2]), timeFromStartPhrase, f(params[2]) - timePhrase};
+                                y = std::max(std::min(linear(forF), (float)charSize), 0.0f);
                             }
-                            renderFunction.display();*/
-                            needCenter = true;
-                            break;
-                        }
-                        case Mode::OutZoom: {
-                            checkTimeReverse(f(params[1]));
-                            ForF forF = {charSize, f(params[0]), f(params[1]), timeFromStartPhrase, f(params[1]) - timePhrase};
-                            auto min = std::max(std::min(linear(forF), (float)charSize), 0.0f);
-                            text.setCharacterSize(min);
-                            text.setOutlineThickness(min / charSize * thickness);
+
+                            text.setCharacterSize(y);
+                            text.setOutlineThickness(y / charSize * thickness);
+
                             needCenter = true;
                             break;
                         }
@@ -365,6 +366,28 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         } else {
             text.setString(L"");
         }
+
+        #ifdef CHECK_FUNCTION
+            renderFunction.clear();
+            sf::RectangleShape rectangle(sf::Vector2f(120.f, 50.f));
+            rectangle.setSize(sf::Vector2f(1, 1));
+            for (int i = 0; i < 1000; i++) {
+
+                ForF forF = {0, 100, 1000, i};
+                auto y = linear(forF);
+
+                rectangle.setPosition(i, height / 2 - y);
+                rectangle.setFillColor(sf::Color::Blue);
+                renderFunction.draw(rectangle);
+
+                y = linear(forF);
+
+                rectangle.setFillColor(sf::Color::Red);
+                rectangle.setPosition(i, height / 2 - y);
+                renderFunction.draw(rectangle);
+            }
+            renderFunction.display();
+        #endif
 
         /*if (switchShader) {
             switchShader = false;*/
@@ -407,35 +430,33 @@ void Render::render(std::vector<Phrase> phrases, std::string musicFile) {
         }*/
 
         shader.setUniform("time", (float)time / 1000);
-        //shaderText.setUniform("time", (float)time / 1000);
-
-        /*(renderTexture.clear();
-        renderTexture.draw(background, &shader);
-        renderTexture.draw(text);
-        renderTexture.display();
-
-        auto img = renderTexture.getTexture().copyToImage();
-        auto number = std::to_string(numberFrame++);
-        std::string numberWithZeros = std::string(7 - number.length(), '0') + number;
-        auto future1 = std::async(std::launch::async, [&]{ img.saveToFile("video/" + numberWithZeros + ".png"); });*/
-
 
         window.clear();
 
         window.draw(background, &shader);
 
-        const sf::Texture& texture = renderFunction.getTexture();
-        sf::Sprite sprite(texture);
-        window.draw(sprite);
+        #ifdef CHECK_FUNCTION
+            const sf::Texture& texture = renderFunction.getTexture();
+            sf::Sprite sprite(texture);
+            window.draw(sprite);
+        #endif
 
         window.draw(rectangleBackground);
 
         text.getCharacterSize() > 0 ? window.draw(text) : void();
 
-        window.display();
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, screenBuffer);
+        record.write(screenBuffer);
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 70));
-
-        //time += 1000.0d / 60.0d;
+        #ifdef REALTIME
+            window.display();
+        #else
+            time += 1000.0d / (double)fps;
+        #endif
     }
+    delete[] screenBuffer;
 }
+
+/*Render::~Render() {
+
+}*/
