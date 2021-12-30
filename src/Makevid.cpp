@@ -103,19 +103,33 @@ inline std::string trim(const std::string &s)
    return std::string(wsfront,std::find_if_not(s.rbegin(),std::string::const_reverse_iterator(wsfront),[](int c){return std::isspace(c);}).base());
 }
 
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if(from.empty())
+        return;
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}
+
 std::vector<Phrase> Makevid::parseSubtitles(std::string file, int subtitlesOffset/* = 0 */) {
     std::vector<Phrase> phrases;
     std::string line;
     std::ifstream in(file);
 
+    std::string htmlEntities[][2] = {{"&nbsp;", " "}, {"&lt;", "<"}, {"&gt;", ">"}, {"&amp;", "&"}, {"&quot;", "\""}, {"&apos;", "\'"}, {"&copy", "©"}};
+
     if (in.is_open()) {
         long start = 0, end = 0;
         std::string text = "";
         int currentPhrase = 0;
+        int linesInSubtitle = 0;
         while (getline(in, line)) {
             if (line.empty())
                 continue;
             if (line.find(" --> ") != std::string::npos) {
+                linesInSubtitle = 0;
                 int h1, m1, s1, ml1, h2, m2, s2, ml2;
                 auto lineStr = std::string(line.begin(), line.end());
                 if (sscanf(lineStr.c_str(), "%d:%d:%d,%d --> %d:%d:%d,%d", &h1, &m1, &s1, &ml1, &h2, &m2, &s2, &ml2) >= 8) {
@@ -128,7 +142,17 @@ std::vector<Phrase> Makevid::parseSubtitles(std::string file, int subtitlesOffse
             }
             else {
                 text = trim(eraseHtml(line));
-                phrases.push_back({start, end, text});
+                for (const auto& it : htmlEntities) {
+                    replaceAll(text, it[0], it[1]);
+                }
+
+                linesInSubtitle++;
+                if (linesInSubtitle > 1) {
+                    phrases.back().setText(phrases.back().getText() + " " + text);
+                }
+                else {
+                    phrases.push_back({start, end, text});
+                }
             }
         }
     } else {
@@ -166,9 +190,11 @@ std::vector<Phrase> Makevid::processing(std::vector<Phrase> phrases) {
         phrase.addMode(Mode::Shader, {shadersPaths[rand() % shadersPaths.size()]});
 
         if (std::all_of(text.begin(), text.end(), [](unsigned char c){ return !std::isalpha(c) || std::isupper(c); })) {
+            //auto lmb = [=](double time){return 10 + std::fmod(time);}
             phrase.addMode(Mode::Zoom, {"1", "10", "100"});
+            //phrase.addMode(Mode::Zoom, {"1", "10", "100"});
         }
-
+        std::clog << "text " << text << " start " << phrases[i].getStart() << " end " << phrases[i].getEnd() << std::endl;
     }
 
     return phrases;

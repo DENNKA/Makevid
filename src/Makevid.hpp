@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
+#include <cmath>
 
 #include "Phrase.hpp"
 #include "Render.hpp"
